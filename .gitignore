@@ -1,0 +1,17 @@
+# Data
+data/
+*.fastq.gz
+*.bam
+*.bai
+
+# Results
+results/
+
+# Snakemake
+.snakemake/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/

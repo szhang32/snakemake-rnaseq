@@ -1,17 +1,15 @@
-SAMPLES = ["sample1", "sample2", "sample3"]
+SAMPLES = ["sample1", "sample2"]
 
 rule all:
     input:
-        expand("bam/{sample}.bam", sample=SAMPLES)
+        expand("results/{sample}.txt", sample=SAMPLES)
 
-rule align:
+rule process_sample:
     input:
-        "reads/{sample}.fastq.gz"
+        "data/{sample}.txt"
     output:
-        "bam/{sample}.bam"
+        "results/{sample}.txt"
     shell:
         """
-        mkdir -p bam
-        echo "Processing {input}"
-        touch {output}
+        cat {input} > {output}
         """

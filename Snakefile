@@ -1,10 +1,17 @@
-rule hello:
-    input:
-        "data/name.txt"
-    output:
-        "results/hello.txt"
+SAMPLES = ["sample1", "sample2", "sample3"]
 
+rule all:
+    input:
+        expand("bam/{sample}.bam", sample=SAMPLES)
+
+rule align:
+    input:
+        "reads/{sample}.fastq.gz"
+    output:
+        "bam/{sample}.bam"
     shell:
         """
-        echo "Hello $(cat {input})" > {output}
+        mkdir -p bam
+        echo "Processing {input}"
+        touch {output}
         """

@@ -6,10 +6,12 @@ rule all:
 
 rule process_sample:
     input:
-        "data/{sample}.txt"
+        r1="data/{sample}_R1.txt",
+        r2="data/{sample}_R2.txt"
     output:
         "results/{sample}.txt"
     shell:
         """
-        cat {input} > {output}
+        mkdir -p results
+        cat {input.r1} {input.r2} > {output}
         """

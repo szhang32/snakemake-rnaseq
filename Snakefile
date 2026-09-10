@@ -2,8 +2,7 @@ SAMPLES = ["sample1", "sample2"]
 
 rule all:
     input:
-        expand("results/{sample}.txt", sample=SAMPLES),
-        expand("results/{sample}.log", sample=SAMPLES)
+        expand("summary/{sample}.summary.txt", sample=SAMPLES)
 
 rule process_sample:
     input:
@@ -17,4 +16,15 @@ rule process_sample:
         mkdir -p results
         cat {input.r1} {input.r2} > {output.merged}
         echo "Processed {wildcards.sample}" > {output.log}
+        """
+
+rule summarize:
+    input:
+        "results/{sample}.txt"
+    output:
+        "summary/{sample}.summary.txt"
+    shell:
+        """
+        mkdir -p summary
+        wc -l {input} > {output}
         """

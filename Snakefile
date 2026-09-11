@@ -2,29 +2,28 @@ SAMPLES = ["sample1", "sample2"]
 
 rule all:
     input:
-        expand("summary/{sample}.summary.txt", sample=SAMPLES)
+        expand("results/fastqc/{sample}_R1_fastqc.html", sample=SAMPLES),
+        expand("results/fastqc/{sample}_R2_fastqc.html", sample=SAMPLES)
 
-rule process_sample:
+
+rule fastqc:
     input:
-        r1="data/{sample}_R1.txt",
-        r2="data/{sample}_R2.txt"
+        r1="data/{sample}_R1.fastq.gz",
+        r2="data/{sample}_R2.fastq.gz"
+
     output:
-        merged="results/{sample}.txt",
-        log="results/{sample}.log"
+        r1_html="results/fastqc/{sample}_R1_fastqc.html",
+        r1_zip="results/fastqc/{sample}_R1_fastqc.zip",
+        r2_html="results/fastqc/{sample}_R2_fastqc.html",
+        r2_zip="results/fastqc/{sample}_R2_fastqc.zip"
+
+    conda:
+        "workflow/envs/fastqc.yaml"
+
     shell:
         """
-        mkdir -p results
-        cat {input.r1} {input.r2} > {output.merged}
-        echo "Processed {wildcards.sample}" > {output.log}
+        mkdir -p results/fastqc
+        fastqc {input.r1} {input.r2} --outdir results/fastqc
         """
 
-rule summarize:
-    input:
-        "results/{sample}.txt"
-    output:
-        "summary/{sample}.summary.txt"
-    shell:
-        """
-        mkdir -p summary
-        wc -l {input} > {output}
-        """
+

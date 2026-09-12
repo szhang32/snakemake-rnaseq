@@ -1,0 +1,4 @@
+toy_chr1	toy	exon	1001	1200	.	+	.	gene_id "toy_gene1"; transcript_id "toy_tx1";
+toy_chr1	toy	exon	3001	3200	.	+	.	gene_id "toy_gene2"; transcript_id "toy_tx2";
+toy_chr1	toy	exon	5001	5200	.	+	.	gene_id "toy_gene3"; transcript_id "toy_tx3";
+toy_chr1	toy	exon	7001	7200	.	+	.	gene_id "toy_gene4"; transcript_id "toy_tx4";

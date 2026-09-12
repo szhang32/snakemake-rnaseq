@@ -1,0 +1,19 @@
+### STAR   --runMode genomeGenerate      --runThreadN 2   --genomeDir reference/star_index   --genomeFastaFiles reference/star_index/toy.fa      --genomeSAindexNbases 5   --genomeChrBinNbits 10   --outFileNamePrefix reference/star_index/build.   --sjdbGTFfile reference/star_index/toy.gtf   --sjdbOverhang 99
+### GstrandBit 32
+versionGenome	2.7.4a
+genomeType	Full
+genomeFastaFiles	reference/star_index/toy.fa 
+genomeSAindexNbases	5
+genomeChrBinNbits	10
+genomeSAsparseD	1
+genomeTransformType	None
+genomeTransformVCF	-
+sjdbOverhang	99
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	reference/star_index/toy.gtf
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	exon
+sjdbGTFtagExonParentTranscript	transcript_id
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic
+genomeFileSizes	10240 82503

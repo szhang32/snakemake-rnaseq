@@ -2,9 +2,7 @@ SAMPLES = ["sample1", "sample2"]
 
 rule all:
     input:
-        expand("results/fastqc/{sample}_R1_fastqc.html", sample=SAMPLES),
-        expand("results/fastqc/{sample}_R2_fastqc.html", sample=SAMPLES)
-
+        "results/multiqc/multiqc_report.html"
 
 rule fastqc:
     input:
@@ -26,4 +24,20 @@ rule fastqc:
         fastqc {input.r1} {input.r2} --outdir results/fastqc
         """
 
+rule multiqc:
+    input:
+        expand("results/fastqc/{sample}_R1_fastqc.zip", sample=SAMPLES),
+        expand("results/fastqc/{sample}_R2_fastqc.zip", sample=SAMPLES)
 
+    output:
+        "results/multiqc/multiqc_report.html"
+
+    conda:
+        "workflow/envs/multiqc.yaml"
+
+    shell:
+        """
+        mkdir -p results/multiqc
+        multiqc results/fastqc \
+            --outdir results/multiqc
+        """

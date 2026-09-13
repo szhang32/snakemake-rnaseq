@@ -117,6 +117,7 @@ rule star_align:
             --genomeDir {params.index:q} \
             --readFilesIn {input.r1:q} {input.r2:q} \
             --readFilesCommand gzip -dc \
+            --limitBAMsortRAM 1100000000 \
             --outSAMtype BAM SortedByCoordinate \
             --outFileNamePrefix {params.prefix:q} \
             > {log:q} 2>&1
@@ -208,4 +209,3 @@ rule multiqc:
             --force \
             --outdir {RESULTS}/multiqc
         """
-

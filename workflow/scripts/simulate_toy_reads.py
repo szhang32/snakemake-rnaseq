@@ -1,5 +1,7 @@
 """Generate reproducible, error-free paired reads from the toy genome."""
 
+import argparse
+import csv
 import gzip
 import random
 from pathlib import Path
@@ -12,13 +14,35 @@ COMPLEMENT = str.maketrans("ACGT", "TGCA")
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--samples", type=Path, default=ROOT / "project_A/samples.tsv",
+                        help="Sample sheet; r1/r2 paths are relative to its directory")
+    args = parser.parse_args()
+    sheet = args.samples.resolve()
+    with sheet.open(newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if not {"sample", "r1", "r2"}.issubset(reader.fieldnames or []):
+            raise ValueError("Sample sheet requires sample, r1, and r2 columns")
+        rows = list(reader)
+    if not rows or any(not row.get(k) for row in rows for k in ("sample", "r1", "r2")):
+        raise ValueError("Sample sheet is empty or contains missing values")
+    if len({row["sample"] for row in rows}) != len(rows):
+        raise ValueError("Sample IDs must be unique")
+    destinations = [(sheet.parent / row[k]).resolve() for row in rows for k in ("r1", "r2")]
+    if len(set(destinations)) != len(destinations):
+        raise ValueError("FASTQ output paths must be unique")
+    if any(not str(path).endswith(".fastq.gz") for path in destinations):
+        raise ValueError("FASTQ output paths must end with .fastq.gz")
     fasta = (ROOT / "reference/star_index/toy.fa").read_text().splitlines()
     assert sum(line.startswith(">") for line in fasta) == 1
     genome = "".join(line.strip() for line in fasta if not line.startswith(">")).upper()
     assert set(genome) <= set("ACGT") and len(genome) >= 500
-    for sample, seed in (("sample1", 42), ("sample2", 43)):
+    for index, row in enumerate(rows):
+        sample, seed = row["sample"], 42 + index
         rng = random.Random(seed)
-        paths = [ROOT / "data" / f"{sample}_R{mate}.fastq.gz" for mate in (1, 2)]
+        paths = [(sheet.parent / row[k]).resolve() for k in ("r1", "r2")]
+        for path in paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
         with paths[0].open("wb") as raw1, paths[1].open("wb") as raw2:
             with gzip.GzipFile(filename="", mode="wb", fileobj=raw1, mtime=0) as r1, gzip.GzipFile(
                 filename="", mode="wb", fileobj=raw2, mtime=0

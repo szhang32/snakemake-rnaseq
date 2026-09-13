@@ -1,0 +1,7 @@
+executor: slurm
+
+jobs: 50
+
+default-resources:
+  mem_mb: 4000
+  runtime: 60

@@ -1,0 +1,211 @@
+import pandas as pd
+
+configfile: "config.yaml"
+
+
+# --------------------------------------------------
+# Configuration
+# --------------------------------------------------
+
+samples = pd.read_csv(
+    config["samples"],
+    sep="\t",
+    index_col="sample"
+)
+
+SAMPLES = samples.index.tolist()
+
+RESULTS = config["results_dir"]
+STAR_INDEX = config["reference"]["star_index"]
+GTF = config["reference"]["gtf"]
+
+
+def get_r1(wildcards):
+    return samples.loc[wildcards.sample, "r1"]
+
+
+def get_r2(wildcards):
+    return samples.loc[wildcards.sample, "r2"]
+
+
+# --------------------------------------------------
+# Final targets
+# --------------------------------------------------
+
+rule all:
+    input:
+        f"{RESULTS}/multiqc/multiqc_report.html",
+        expand(
+            f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam",
+            sample=SAMPLES
+        ),
+        f"{RESULTS}/featurecounts/gene_counts.txt",
+        f"{RESULTS}/featurecounts/gene_counts.txt.summary"
+
+
+# --------------------------------------------------
+# FastQC
+# --------------------------------------------------
+
+rule fastqc:
+    input:
+        r1=get_r1,
+        r2=get_r2
+
+    output:
+        r1_html=f"{RESULTS}/fastqc/{{sample}}_R1_fastqc.html",
+        r1_zip=f"{RESULTS}/fastqc/{{sample}}_R1_fastqc.zip",
+        r2_html=f"{RESULTS}/fastqc/{{sample}}_R2_fastqc.html",
+        r2_zip=f"{RESULTS}/fastqc/{{sample}}_R2_fastqc.zip"
+
+    threads: 2
+
+    resources:
+        mem_mb=4000,
+        runtime=60
+
+    conda:
+        "envs/fastqc.yaml"
+
+    shell:
+        """
+        mkdir -p {RESULTS}/fastqc
+
+        fastqc \
+            {input.r1:q} \
+            {input.r2:q} \
+            --threads {threads} \
+            --outdir {RESULTS}/fastqc
+        """
+
+
+# --------------------------------------------------
+# STAR
+# --------------------------------------------------
+
+rule star_align:
+    input:
+        r1=get_r1,
+        r2=get_r2
+
+    output:
+        bam=f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam"
+
+    log:
+        f"{RESULTS}/logs/star/{{sample}}.log"
+
+    threads: 8
+
+    resources:
+        mem_mb=32000,
+        runtime=240
+
+    conda:
+        "envs/star.yaml"
+
+    params:
+        index=STAR_INDEX,
+        prefix=f"{RESULTS}/star/{{sample}}."
+
+    shell:
+        """
+        mkdir -p {RESULTS}/star
+        mkdir -p {RESULTS}/logs/star
+
+        STAR \
+            --runThreadN {threads} \
+            --genomeDir {params.index:q} \
+            --readFilesIn {input.r1:q} {input.r2:q} \
+            --readFilesCommand gzip -dc \
+            --outSAMtype BAM SortedByCoordinate \
+            --outFileNamePrefix {params.prefix:q} \
+            > {log:q} 2>&1
+        """
+
+
+# --------------------------------------------------
+# featureCounts
+# --------------------------------------------------
+
+rule featurecounts:
+    input:
+        bams=expand(
+            f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam",
+            sample=SAMPLES
+        ),
+        gtf=GTF
+
+    output:
+        counts=f"{RESULTS}/featurecounts/gene_counts.txt",
+        summary=f"{RESULTS}/featurecounts/gene_counts.txt.summary"
+
+    log:
+        f"{RESULTS}/logs/featurecounts.log"
+
+    threads: 8
+
+    resources:
+        mem_mb=16000,
+        runtime=120
+
+    conda:
+        "envs/featurecounts.yaml"
+
+    params:
+        strandedness=config["strandedness"]
+
+    shell:
+        """
+        mkdir -p {RESULTS}/featurecounts
+        mkdir -p {RESULTS}/logs
+
+        featureCounts \
+            -T {threads} \
+            -p \
+            --countReadPairs \
+            -s {params.strandedness} \
+            -t exon \
+            -g gene_id \
+            -a {input.gtf:q} \
+            -o {output.counts:q} \
+            {input.bams:q} \
+            > {log:q} 2>&1
+        """
+
+
+# --------------------------------------------------
+# MultiQC
+# --------------------------------------------------
+
+rule multiqc:
+    input:
+        expand(
+            f"{RESULTS}/fastqc/{{sample}}_R1_fastqc.zip",
+            sample=SAMPLES
+        ),
+        expand(
+            f"{RESULTS}/fastqc/{{sample}}_R2_fastqc.zip",
+            sample=SAMPLES
+        )
+
+    output:
+        f"{RESULTS}/multiqc/multiqc_report.html"
+
+    threads: 1
+
+    resources:
+        mem_mb=4000,
+        runtime=30
+
+    conda:
+        "envs/multiqc.yaml"
+
+    shell:
+        """
+        mkdir -p {RESULTS}/multiqc
+
+        multiqc {RESULTS}/fastqc \
+            --force \
+            --outdir {RESULTS}/multiqc
+        """
+

@@ -1,0 +1,5 @@
+sample	r1	r2
+control_1	reads/control_1_R1.fastq.gz	reads/control_1_R2.fastq.gz
+control_2	reads/control_2_R1.fastq.gz	reads/control_2_R2.fastq.gz
+treated_A	reads/treated_A_R1.fastq.gz	reads/treated_A_R2.fastq.gz
+treated_B	reads/treated_B_R1.fastq.gz	reads/treated_B_R2.fastq.gz

@@ -1,0 +1,11 @@
+project: project_A
+
+samples: samples.tsv
+
+reference:
+  star_index: reference/star_index
+  gtf: reference/star_index/toy.gtf
+
+results_dir: results
+
+strandedness: 0

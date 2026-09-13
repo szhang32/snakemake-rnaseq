@@ -39,6 +39,10 @@ rule all:
             f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam",
             sample=SAMPLES
         ),
+        expand(
+            f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam.bai",
+            sample=SAMPLES
+        ),
         f"{RESULTS}/featurecounts/gene_counts.txt",
         f"{RESULTS}/featurecounts/gene_counts.txt.summary"
 
@@ -121,6 +125,25 @@ rule star_align:
             --outSAMtype BAM SortedByCoordinate \
             --outFileNamePrefix {params.prefix:q} \
             > {log:q} 2>&1
+        """
+
+#--------------------------------------------------
+# samtools index
+#--------------------------------------------------
+rule samtools_index:
+    input:
+        bam=f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam"
+    output:
+        bai=f"{RESULTS}/star/{{sample}}.Aligned.sortedByCoord.out.bam.bai"
+    threads: 2
+    resources:
+        mem_mb=4000,
+        runtime=30
+    conda:
+        "envs/samtools.yaml"
+    shell:
+        """
+        samtools index -@ {threads} {input.bam:q}
         """
 
 
